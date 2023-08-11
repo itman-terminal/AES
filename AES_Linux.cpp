@@ -130,4 +130,4 @@ void DecryptFile(const std::string& inputFile, const std::string& outputFile, co
                                                true, // putMessage
                                                [&](int current, int total)
                                                {
-                                                   float progress = static
+                                                   float progress = static}}
