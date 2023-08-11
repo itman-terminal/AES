@@ -1,7 +1,3 @@
-/*注意
-此代码由ai生成
-不保证完全能用*/
-
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -23,7 +19,7 @@ void UpdateProgressBar(float progress)
         if (i < pos)
             bar += "=";
         else if (i == pos)
-            bar += "\033[1;32m>\033[0m"; // 绿色的等于号
+            bar += ">";
         else
             bar += " ";
     }
@@ -34,7 +30,7 @@ void UpdateProgressBar(float progress)
 
 void Log(const std::string& message)
 {
-    std::cout << "\033[1;32m" << message << "\033[0m" << std::endl; // 绿色的文本
+    std::cout << message << std::endl;
 }
 
 void EncryptFile(const std::string& inputFile, const std::string& outputFile, const std::string& password)
@@ -62,10 +58,13 @@ void EncryptFile(const std::string& inputFile, const std::string& outputFile, co
     }
 
     // 初始化加密器
-    SecByteBlock key(AES::DEFAULT_KEYLENGTH);
+    byte key[AES::DEFAULT_KEYLENGTH];
     memcpy(key, password.c_str(), AES::DEFAULT_KEYLENGTH);
+    byte iv[AES::BLOCKSIZE]; // 初始化向量
+    memset(iv, 0x00, AES::BLOCKSIZE); // 使用零填充
+
     CBC_Mode<AES>::Encryption encryption;
-    encryption.SetKeyWithIV(key, key);
+    encryption.SetKeyWithIV(key, sizeof(key), iv);
 
     // 加密
     std::string ciphertext;
@@ -107,4 +106,28 @@ void DecryptFile(const std::string& inputFile, const std::string& outputFile, co
     }
     else
     {
-        std::cerr << "无法打开输入文件" << std
+        std::cerr << "无法打开输入文件" << std::endl;
+        return;
+    }
+
+    // 初始化解密器
+    byte key[AES::DEFAULT_KEYLENGTH];
+    memcpy(key, password.c_str(), AES::DEFAULT_KEYLENGTH);
+    byte iv[AES::BLOCKSIZE]; // 初始化向量
+    memset(iv, 0x00, AES::BLOCKSIZE); // 使用零填充
+
+    CBC_Mode<AES>::Decryption decryption;
+    decryption.SetKeyWithIV(key, sizeof(key), iv);
+
+    // 解密
+    std::string plaintext;
+
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    StringSource(ciphertext, true,
+                 new StreamTransformationFilter(decryption, new StringSink(plaintext),
+                                               new FileSink(outputFile.c_str()),
+                                               true, // putMessage
+                                               [&](int current, int total)
+                                               {
+                                                   float progress = static
